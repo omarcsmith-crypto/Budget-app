@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Budget</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4CAF50">
+<link rel="apple-touch-icon" href="icon.png">
+
+<style>
+body {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+    background: #f2f2f7;
+}
+.container {
+    max-width: 500px;
+    margin: auto;
+    padding: 20px;
+}
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+h1 { text-align: center; }
+.balance {
+    text-align: center;
+    font-size: 28px;
+    margin: 10px 0;
+}
+input, select, button {
+    width: 100%;
+    padding: 12px;
+    margin: 6px 0;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    font-size: 16px;
+}
+button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+}
+.transaction {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    margin-top: 6px;
+    background: #f9f9f9;
+    border-radius: 10px;
+}
+.income { color: green; }
+.expense { color: red; }
+.delete-btn {
+    background: red;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+    <div class="card">
+        <h1>Budget</h1>
+        <div class="balance">$<span id="balance">0.00</span></div>
+
+        <input type="text" id="description" placeholder="Description">
+        <input type="number" id="amount" placeholder="Amount">
+        <select id="type">
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+        </select>
+        <button onclick="addTransaction()">Add</button>
+
+        <div id="transactions"></div>
+    </div>
+</div>
+
+<script>
+let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
+function saveData() {
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+}
+
+function updateUI() {
+    const list = document.getElementById('transactions');
+    const balanceEl = document.getElementById('balance');
+    list.innerHTML = '';
+    let balance = 0;
+
+    transactions.forEach((t, i) => {
+        balance += t.type === 'income' ? t.amount : -t.amount;
+        const div = document.createElement('div');
+        div.className = 'transaction';
+        div.innerHTML = `
+            <span class="${t.type}">
+                ${t.description} - $${t.amount.toFixed(2)}
+            </span>
+            <button class="delete-btn" onclick="removeTransaction(${i})">X</button>
+        `;
+        list.appendChild(div);
+    });
+
+    balanceEl.textContent = balance.toFixed(2);
+}
+
+function addTransaction() {
+    const desc = document.getElementById('description').value;
+    const amt = parseFloat(document.getElementById('amount').value);
+    const type = document.getElementById('type').value;
+
+    if (!desc || isNaN(amt) || amt <= 0) return alert("Enter valid data");
+
+    transactions.push({ description: desc, amount: amt, type });
+    saveData();
+    updateUI();
+
+    document.getElementById('description').value = '';
+    document.getElementById('amount').value = '';
+}
+
+function removeTransaction(index) {
+    transactions.splice(index, 1);
+    saveData();
+    updateUI();
+}
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js');
+}
+
+updateUI();
+</script>
+</body>
+</html>
